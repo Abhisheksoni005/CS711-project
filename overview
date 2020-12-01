@@ -1,0 +1,20 @@
+users -> 1) actions (like, dislike, (share))
+         2) bias
+POST -> intial bias 
+     -> updated bias (extra functionality) 
+
+generate functions:
+1) generate_user ->random biases from -1 to 1
+2) generate_post -> random biases from -1 to 1
+3) generate_viewership : returns a map from post to Users
+4) generate_action : returns the actions performed ------> (generate_viewership, user, post)
+
+Variables:
+1) Posts: array of biases
+2) Users: array of user biases
+3) number of rounds
+4) GenerateUsership
+
+Prob. distributions:
+1) probability of user seeing a post ----> (user.bias, post.bias)
+2) probability of users action on a post ----> (user.bias, post.bias(updated_bias))

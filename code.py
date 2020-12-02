@@ -55,6 +55,8 @@ def cointoss(p):
 	return 1 if random.random() < p else 0
 
 def viewership():
+	global viewership_map
+	viewership_map = {}
 	sigma = 1
 	for i in range(len(posts)):
 		mu = posts[i]
@@ -109,7 +111,7 @@ def update_user_bias():
 
 def share():
 	global viewership_map
-	viewership_map = {}
+	# viewership_map = {}
 	for i in share_map:
 		for j in share_map[i]:
 			if i not in viewership_map:viewership_map[i]=[]
@@ -160,5 +162,6 @@ for _ in range(LOOPS):
 	update_user_bias()
 	printutil()
 	printmaps()
+	viewership()
 	share()
 	# print(users)

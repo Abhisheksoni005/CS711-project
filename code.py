@@ -1,20 +1,26 @@
 import random
 import sys
 import math
+from networkx.generators.random_graphs import erdos_renyi_graph
 
-USER_NUM = 50
-POST_NUM = 5
+USER_NUM = 100
+POST_NUM = 10
+LOOPS = 10
 GAUSS_FAC = 10/9
+ALPHA  = 0.95
+BETA = 0.90
+
 users = USER_NUM*[0]
 posts = POST_NUM*[0]
 
+graph = {}
 viewership_map = {}
 like_map = {}
 share_map = {}
 dislike_map = {}
 
 def printmaps():
-	print("viewership")
+	print("\nviewership")
 	for x in viewership_map:print(x,viewership_map[x])
 	print("\nDislikes")
 	for x in dislike_map:print(x,dislike_map[x])
@@ -40,7 +46,7 @@ def cointoss(p):
 	return 1 if random.random() < p else 0
 
 def viewership():
-	sigma = 0.4
+	sigma = 1
 	for i in range(len(posts)):
 		mu = posts[i]
 		for j in range(len(users)):
@@ -50,6 +56,13 @@ def viewership():
 				viewership_map[i].append(j)
 
 def generate_actions():
+	global like_map
+	global share_map
+	global dislike_map
+	like_map = {}
+	share_map = {}
+	dislike_map = {}
+
 	for i in viewership_map:
 		mu = posts[i]
 		sigma = 0.25
@@ -71,14 +84,54 @@ def generate_actions():
 				if i not in share_map:share_map[i]=[]
 				share_map[i].append(j)
 
+def update_user_bias():
+	for i in like_map:
+		for j in like_map[i]:
+			users[j] = round(users[j]*ALPHA + posts[i]*(1-ALPHA),2)
+
+	for i in dislike_map:
+		for j in dislike_map[i]:
+			users[j] = round(users[j]*ALPHA -	posts[i]*(1-ALPHA),2)
+			
+	for i in share_map:
+		for j in share_map[i]:
+			users[j] = round(users[j]*BETA + posts[i]*(1-BETA),2)
+
+
+def share():
+	global viewership_map
+	viewership_map = {}
+	for i in share_map:
+		for j in share_map[i]:
+			if i not in viewership_map:viewership_map[i]=[]
+			viewership_map[i].append(j)
+
 
 def initialize():	
-	for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),1)
-	for i in range(POST_NUM):posts[i]=round(random.uniform(-1,1),1)
+	for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),2)
+	for i in range(POST_NUM):posts[i]=round(random.uniform(-1,1),2)
 	users.sort()
 	posts.sort()
-	viewership()	
-	generate_actions()
+	g = erdos_renyi_graph(USER_NUM,0.5)
+	for x,y in g.edges:
+		if x not in graph:graph[x] = []
+		if y not in graph:graph[y] = []
+		graph[x].append(y)
+		graph[y].append(x)
+
+	viewership()
+	
+
 
 initialize()
-printmaps()
+print(users)
+generate_actions()
+update_user_bias()
+# printmaps()
+
+for _ in range(LOOPS):
+	share()
+	generate_actions()
+	update_user_bias()
+	# printmaps()
+	print(users)

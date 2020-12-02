@@ -29,6 +29,12 @@ def printmaps():
 	print("\nShares")
 	for x in share_map:print(x,share_map[x])
 
+def printutil():
+	print()
+	print("Utility of platform:", utility_platform())
+	print("Utility of users:", round(sum(utility_users()),2))
+	print("Utility of creators:", round(sum(utility_creaters()),2))	
+
 def gaussian(x,mu,sigma):
 	if sigma == 0 : return 1
 	x = float(x - mu)/sigma
@@ -36,6 +42,9 @@ def gaussian(x,mu,sigma):
 
 def mu_val(arr):
 	return sum(arr)/len(arr)
+
+def invert(x):
+	return round(1/x,2) if x else 0	
 
 def sigma_val(arr,mu):
 	crr = [0]*len(arr)
@@ -91,7 +100,7 @@ def update_user_bias():
 
 	for i in dislike_map:
 		for j in dislike_map[i]:
-			users[j] = round(users[j]*ALPHA -	posts[i]*(1-ALPHA),2)
+			users[j] = round(users[j]*ALPHA - posts[i]*(1-ALPHA),2)
 			
 	for i in share_map:
 		for j in share_map[i]:
@@ -106,6 +115,29 @@ def share():
 			if i not in viewership_map:viewership_map[i]=[]
 			viewership_map[i].append(j)
 
+def utility_platform():
+	util = 0
+	for i in viewership_map:
+		util += len(viewership_map[i])
+	return round(util/USER_NUM/POST_NUM,2)
+
+def utility_creaters():
+	util = POST_NUM*[0]
+	for i in like_map:
+		util[i] += len(like_map[i])
+	for i in dislike_map:
+		util[i] -= len(dislike_map[i])*0.25
+	for i in share_map:
+		util[i] += len(share_map)*2
+	return util	
+
+def utility_users():
+	util = USER_NUM*[0]
+	for i in viewership_map:
+		for j in viewership_map[i]:
+			util[j] += abs(posts[i]-users[j])	
+	util = map(lambda x: invert(x), util)
+	return util	
 
 def initialize():	
 	for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),2)
@@ -121,17 +153,12 @@ def initialize():
 
 	viewership()
 	
-
-
 initialize()
-print(users)
-generate_actions()
-update_user_bias()
-# printmaps()
 
 for _ in range(LOOPS):
-	share()
 	generate_actions()
 	update_user_bias()
-	# printmaps()
-	print(users)
+	printutil()
+	printmaps()
+	share()
+	# print(users)

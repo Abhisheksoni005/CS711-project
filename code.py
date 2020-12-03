@@ -3,8 +3,8 @@ import sys
 import math
 from networkx.generators.random_graphs import erdos_renyi_graph
 
-USER_NUM = 100
-POST_NUM = 10
+USER_NUM = 25
+POST_NUM = 4
 LOOPS = 10
 GAUSS_FAC = 10/9
 ALPHA  = 0.95
@@ -114,8 +114,10 @@ def share():
 	# viewership_map = {}
 	for i in share_map:
 		for j in share_map[i]:
-			if i not in viewership_map:viewership_map[i]=[]
-			viewership_map[i].append(j)
+			for k in graph[j]:
+				if i not in viewership_map:viewership_map[i]=[]
+				if k not in viewership_map[i]:
+					viewership_map[i].append(k)
 
 def utility_platform():
 	util = 0

@@ -66,7 +66,7 @@ def viewership():
 				if i not in viewership_map:viewership_map[i] = []
 				viewership_map[i].append(j)
 
-def generate_actions():
+def generate_actions_given_bias():
 	global like_map
 	global share_map
 	global dislike_map
@@ -95,6 +95,38 @@ def generate_actions():
 				if i not in share_map:share_map[i]=[]
 				share_map[i].append(j)
 
+def generate_actions():
+	global like_map
+	global share_map
+	global dislike_map
+	# like_map = {}
+	# share_map = {}
+	# dislike_map = {}
+
+	for i in viewership_map:
+		mu = posts[i]
+		sigma = 0.25
+
+		k = gaussian(mu,mu,sigma)*GAUSS_FAC
+		for j in viewership_map[i]:
+			if (i in like_map and j in like_map[i]) or (i in dislike_map and j in dislike_map[i]):
+				continue
+			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
+				if i not in like_map:like_map[i] = []
+				like_map[i].append(j)
+			else:
+				if i not in dislike_map:dislike_map[i] = []
+				dislike_map[i].append(j)
+	
+	for i in like_map:
+		mu = posts[i]
+		sigma = 0.02
+		for j in like_map[i]:
+			if i in share_map and j in share_map[i]:continue
+			if cointoss(gaussian(users[j],mu,sigma)) == 1:
+				if i not in share_map:share_map[i]=[]
+				share_map[i].append(j)
+
 def update_user_bias():
 	for i in like_map:
 		for j in like_map[i]:
@@ -119,11 +151,14 @@ def share():
 				if k not in viewership_map[i]:
 					viewership_map[i].append(k)
 
+
+# relate platform utility to decreasing user bias
 def utility_platform():
 	util = 0
 	for i in viewership_map:
 		util += len(viewership_map[i])
 	return round(util/USER_NUM/POST_NUM,2)
+
 
 def utility_creaters():
 	util = POST_NUM*[0]
@@ -141,7 +176,7 @@ def utility_users():
 		for j in viewership_map[i]:
 			util[j] += abs(posts[i]-users[j])	
 	util = map(lambda x: invert(x), util)
-	return util	
+	return util
 
 def initialize():	
 	for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),2)
@@ -155,15 +190,24 @@ def initialize():
 		graph[x].append(y)
 		graph[y].append(x)
 
+	print(users)
+	print(posts)	
+	for i in graph:
+		print(i,graph[i])
+
 	viewership()
 	
 initialize()
+printutil()
+printmaps()
 
-for _ in range(LOOPS):
+for i in range(LOOPS):
+	print("LOOP",i)
 	generate_actions()
 	update_user_bias()
 	printutil()
 	printmaps()
-	viewership()
+	# viewership()
 	share()
 	# print(users)
+

@@ -70,23 +70,30 @@ def generate_actions_given_bias():
 	global like_map
 	global share_map
 	global dislike_map
-	like_map = {}
-	share_map = {}
-	dislike_map = {}
 
 	for i in viewership_map:
 		mu = posts[i]
 		sigma = 0.25
 
-		k = gaussian(mu,mu,sigma)*GAUSS_FAC
-		for j in viewership_map[i]:
-			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
-				if i not in like_map:like_map[i] = []
-				like_map[i].append(j)
-			else:
-				if i not in dislike_map:dislike_map[i] = []
-				dislike_map[i].append(j)
-	
+		if abs(posts[i]) > 0.5:
+			for j in viewership_map[i]:
+				if cointoss(posts[i]) == 1:
+					if i not in dislike_map:dislike_map[i] = []
+					dislike_map[i].append(j)
+				else:
+					if i not in like_map:like_map[i] = []
+					like_map[i].append(j)
+
+		else:
+			k = gaussian(mu,mu,sigma)*GAUSS_FAC
+			for j in viewership_map[i]:
+				if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
+					if i not in like_map:like_map[i] = []
+					like_map[i].append(j)
+				else:
+					if i not in dislike_map:dislike_map[i] = []
+					dislike_map[i].append(j)
+		
 	for i in like_map:
 		mu = posts[i]
 		sigma = 0.02
@@ -99,9 +106,6 @@ def generate_actions():
 	global like_map
 	global share_map
 	global dislike_map
-	# like_map = {}
-	# share_map = {}
-	# dislike_map = {}
 
 	for i in viewership_map:
 		mu = posts[i]
@@ -167,7 +171,7 @@ def utility_creaters():
 	for i in dislike_map:
 		util[i] -= len(dislike_map[i])*0.25
 	for i in share_map:
-		util[i] += len(share_map)*2
+		util[i] += len(share_map)*4
 	return util	
 
 def utility_users():

@@ -2,13 +2,15 @@ import random
 import sys
 import math
 import csv
+import copy
 
-USER_NUM = 25
-POST_NUM = 4
-LOOPS = 10
+USER_NUM = 250
+POST_NUM = 30
+LOOPS = 20
 GAUSS_FAC = 10/9
-ALPHA  = 0.95
-BETA = 0.90
+ALPHA  = 0.90
+BETA = 0.75
+RANGE = "USER_0_0.5"
 
 users = USER_NUM*[0]
 posts = POST_NUM*[0]
@@ -43,8 +45,9 @@ def gaussian(x,mu,sigma):
 def mu_val(arr):
 	return sum(arr)/len(arr)
 
-def invert(x):
-	return round(1/x,2) if x else 0	
+def invert(x,y):
+	val = 1/math.exp(abs(x-y)**2)
+	return round(val,2) if x else 0	
 
 def sigma_val(arr,mu):
 	crr = [0]*len(arr)
@@ -75,28 +78,41 @@ def generate_actions_given_bias():
 		mu = posts[i]
 		sigma = 0.25
 
-		k = gaussian(mu,mu,sigma)*GAUSS_FAC
 		for j in viewership_map[i]:
-			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
-				if i not in like_map:like_map[i] = []
-
-				if abs(posts[i]) > 0.8:
+			if (i in like_map and j in like_map[i]) or (i in dislike_map and j in dislike_map[i]):continue
+			
+			if abs(posts[i]) > 0.5 and posts[i]*users[j] > 0 and abs(posts[i]) > abs(users[j]):
+				if cointoss(abs(posts[i])*1.2) == 1:
 					if i not in dislike_map:dislike_map[i] = []
 					dislike_map[i].append(j)
-					continue
-
-				elif abs(posts[i]-users[j]):
-
 					
-				like_map[i].append(j)
+				else:
+					if i not in like_map:like_map[i] = []
+					like_map[i].append(j)
+
+			elif abs(posts[i]) < 0.25 and abs(posts[i]) <  abs(users[j]):
+				if cointoss(abs(1-posts[i])) == 1:
+					if i not in like_map:like_map[i] = []
+					like_map[i].append(j)
+				else:
+					if i not in dislike_map:dislike_map[i] = []
+					dislike_map[i].append(j)
+				
 			else:
-				if i not in dislike_map:dislike_map[i] = []
-				dislike_map[i].append(j)
-	
+				k = gaussian(mu,mu,sigma)*GAUSS_FAC
+
+				if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
+					if i not in like_map:like_map[i] = []
+					like_map[i].append(j)
+				else:
+					if i not in dislike_map:dislike_map[i] = []
+					dislike_map[i].append(j)
+		
 	for i in like_map:
 		mu = posts[i]
 		sigma = 0.02
 		for j in like_map[i]:
+			if i in share_map and j in share_map[i]:continue
 			if cointoss(gaussian(users[j],mu,sigma)) == 1:
 				if i not in share_map:share_map[i]=[]
 				share_map[i].append(j)
@@ -112,8 +128,8 @@ def generate_actions():
 
 		k = gaussian(mu,mu,sigma)*GAUSS_FAC
 		for j in viewership_map[i]:
-			if (i in like_map and j in like_map[i]) or (i in dislike_map and j in dislike_map[i]):
-				continue
+			if (i in like_map and j in like_map[i]) or (i in dislike_map and j in dislike_map[i]): continue
+
 			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
 				if i not in like_map:like_map[i] = []
 				like_map[i].append(j)
@@ -134,7 +150,7 @@ def update_user_bias():
 	for i in like_map:
 		for j in like_map[i]:
 			users[j] = round(users[j]*ALPHA + posts[i]*(1-ALPHA),2)
-			
+
 	for i in dislike_map:
 		for j in dislike_map[i]:
 			users[j] = round(users[j]*ALPHA - posts[i]*(1-ALPHA),2)
@@ -157,10 +173,16 @@ def share():
 
 # relate platform utility to decreasing user bias
 def utility_platform():
-	util = 0
+	util1,util2 = 0,0
+
 	for i in viewership_map:
-		util += len(viewership_map[i])
-	return round(util/USER_NUM/POST_NUM,2)
+		util1 += len(viewership_map[i])
+	for i in users:
+		util2 += invert(i,0)
+
+	print(util1/USER_NUM/POST_NUM ,util2/USER_NUM)	
+	util = util1/USER_NUM/POST_NUM + util2/USER_NUM
+	return round(util,2)
 
 
 def utility_creaters():
@@ -177,13 +199,13 @@ def utility_users():
 	util = USER_NUM*[0]
 	for i in viewership_map:
 		for j in viewership_map[i]:
-			util[j] += abs(posts[i]-users[j])	
-	
-	util = map(lambda x: invert(x), util)
+			util[j] += invert(posts[i],users[j])
 	
 	return util
 
-def initialize():	
+def initialize(flag):
+	global like_map,dislike_map,share_map
+	like_map,dislike_map,share_map = {},{},{}
 	
 	with open(datafile, 'r') as csvfile:
 	
@@ -203,24 +225,36 @@ def initialize():
 		for row in csvreader:
 			graph[int(row[0])] = [ int(x) for x in row[1:]]	
 
+	if flag:viewership()
 
-	viewership()
+datafile = "data_" + str(USER_NUM) + "_" + str(POST_NUM) + "_" + RANGE + ".csv"
+initialize(1)
 
-datafile = "data_25_4.csv"
-initialize()
+init_viewership = copy.deepcopy(viewership_map)
 
-for i  in graph:
-	print(i, graph[i])
-printmaps()
-
-
+print("Bias:Not Visible")
 for i in range(LOOPS):
-	print("LOOP",i)
 	generate_actions()
 	update_user_bias()
-	printutil()
-	printmaps()
-	# viewership()
+	# printmaps()
 	share()
-	# print(users)
+
+printutil()
+print(round(sum(map(lambda x:(x**2),users)),3))
+
+initialize(0)
+
+viewership_map = init_viewership
+
+print("Bias:Visible")
+for i in range(LOOPS):
+	generate_actions_given_bias()
+	update_user_bias()
+	share()
+	# print(round(sum(map(lambda x:(x**2),users)),3))
+
+print(round(sum(map(lambda x:(x**2),users)),3))
+printutil()
+
+
 

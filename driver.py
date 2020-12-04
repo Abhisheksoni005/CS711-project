@@ -10,7 +10,7 @@ LOOPS = 20
 GAUSS_FAC = 10/9
 ALPHA  = 0.90
 BETA = 0.75
-RANGE = "USER_0_0.5"
+RANGE = "POST_0_0.5"
 
 users = USER_NUM*[0]
 posts = POST_NUM*[0]
@@ -82,7 +82,7 @@ def generate_actions_given_bias():
 			if (i in like_map and j in like_map[i]) or (i in dislike_map and j in dislike_map[i]):continue
 			
 			if abs(posts[i]) > 0.5 and posts[i]*users[j] > 0 and abs(posts[i]) > abs(users[j]):
-				if cointoss(abs(posts[i])*1.2) == 1:
+				if cointoss(abs(posts[i])) == 1:
 					if i not in dislike_map:dislike_map[i] = []
 					dislike_map[i].append(j)
 					
@@ -171,6 +171,9 @@ def share():
 					viewership_map[i].append(k)
 
 
+def reputation(index):
+	return invert(users[index],0)
+
 # relate platform utility to decreasing user bias
 def utility_platform():
 	util1,util2 = 0,0
@@ -180,7 +183,7 @@ def utility_platform():
 	for i in users:
 		util2 += invert(i,0)
 
-	print(util1/USER_NUM/POST_NUM ,util2/USER_NUM)	
+	# print(util1/USER_NUM/POST_NUM ,util2/USER_NUM)	
 	util = util1/USER_NUM/POST_NUM + util2/USER_NUM
 	return round(util,2)
 
@@ -200,6 +203,9 @@ def utility_users():
 	for i in viewership_map:
 		for j in viewership_map[i]:
 			util[j] += invert(posts[i],users[j])
+
+	# for i in range(len(users)):
+	# 	util[i] += reputation(i)	
 	
 	return util
 
@@ -238,6 +244,7 @@ for i in range(LOOPS):
 	update_user_bias()
 	# printmaps()
 	share()
+	print(round(sum(map(lambda x:(x**2),users)),3))
 
 printutil()
 print(round(sum(map(lambda x:(x**2),users)),3))
@@ -251,10 +258,10 @@ for i in range(LOOPS):
 	generate_actions_given_bias()
 	update_user_bias()
 	share()
-	# print(round(sum(map(lambda x:(x**2),users)),3))
+	print(round(sum(map(lambda x:(x**2),users)),3))
 
-print(round(sum(map(lambda x:(x**2),users)),3))
+
 printutil()
-
+print(round(sum(map(lambda x:(x**2),users)),3))
 
 

@@ -7,17 +7,17 @@ from networkx.generators.random_graphs import erdos_renyi_graph
 
 USER_NUM = 250
 POST_NUM = 30
-RANGE = "USER_0_0.5"
+RANGE = "ALL"
 
 users = USER_NUM*[0]
 posts = POST_NUM*[0]
 
 graph = {}
 
-# for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),2)
+for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),2)
 
-for i in range(USER_NUM//2):users[i]=round(random.uniform(0,0.5),2)
-for i in range(USER_NUM//2,USER_NUM):users[i]=round(random.uniform(-0.5,0),2)
+# for i in range(USER_NUM//2):users[i]=round(random.uniform(0,0.5),2)
+# for i in range(USER_NUM//2,USER_NUM):users[i]=round(random.uniform(-0.5,0),2)
 
 for i in range(POST_NUM):posts[i]=round(random.uniform(-1,1),2)
 # for i in range(POST_NUM//2):posts[i]=round(random.uniform(0.7,1),2)

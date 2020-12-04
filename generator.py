@@ -5,8 +5,8 @@ import math
 import csv
 from networkx.generators.random_graphs import erdos_renyi_graph
 
-USER_NUM = 250
-POST_NUM = 30
+USER_NUM = 20
+POST_NUM = 4
 RANGE = "ALL"
 
 users = USER_NUM*[0]
@@ -23,8 +23,8 @@ for i in range(POST_NUM):posts[i]=round(random.uniform(-1,1),2)
 # for i in range(POST_NUM//2):posts[i]=round(random.uniform(0.7,1),2)
 # for i in range(POST_NUM//2,POST_NUM):posts[i]=round(random.uniform(-1,-0.7),2)
 
-users.sort()
-posts.sort()
+# users.sort()
+# posts.sort()
 g = erdos_renyi_graph(USER_NUM,0.5)
 for x,y in g.edges:
 	if x not in graph:graph[x] = []

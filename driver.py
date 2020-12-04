@@ -10,7 +10,7 @@ LOOPS = 20
 GAUSS_FAC = 10/9
 ALPHA  = 0.90
 BETA = 0.75
-RANGE = "POST_0_0.5"
+RANGE = "ALL"
 
 users = USER_NUM*[0]
 posts = POST_NUM*[0]
@@ -85,18 +85,23 @@ def generate_actions_given_bias():
 				if cointoss(abs(posts[i])) == 1:
 					if i not in dislike_map:dislike_map[i] = []
 					dislike_map[i].append(j)
+					update_dislike(i,j)
 					
 				else:
 					if i not in like_map:like_map[i] = []
 					like_map[i].append(j)
+					update_like(i,j)
 
 			elif abs(posts[i]) < 0.25 and abs(posts[i]) <  abs(users[j]):
 				if cointoss(abs(1-posts[i])) == 1:
 					if i not in like_map:like_map[i] = []
 					like_map[i].append(j)
+					update_like(i,j)
+
 				else:
 					if i not in dislike_map:dislike_map[i] = []
 					dislike_map[i].append(j)
+					update_dislike(i,j)
 				
 			else:
 				k = gaussian(mu,mu,sigma)*GAUSS_FAC
@@ -104,9 +109,12 @@ def generate_actions_given_bias():
 				if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
 					if i not in like_map:like_map[i] = []
 					like_map[i].append(j)
+					update_like(i,j)
+
 				else:
 					if i not in dislike_map:dislike_map[i] = []
 					dislike_map[i].append(j)
+					update_dislike(i,j)
 		
 	for i in like_map:
 		mu = posts[i]
@@ -116,6 +124,7 @@ def generate_actions_given_bias():
 			if cointoss(gaussian(users[j],mu,sigma)) == 1:
 				if i not in share_map:share_map[i]=[]
 				share_map[i].append(j)
+				update_shares(i,j)
 
 def generate_actions():
 	global like_map
@@ -133,9 +142,11 @@ def generate_actions():
 			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
 				if i not in like_map:like_map[i] = []
 				like_map[i].append(j)
+				update_like(i,j)
 			else:
 				if i not in dislike_map:dislike_map[i] = []
 				dislike_map[i].append(j)
+				update_dislike(i,j)
 	
 	for i in like_map:
 		mu = posts[i]
@@ -145,6 +156,7 @@ def generate_actions():
 			if cointoss(gaussian(users[j],mu,sigma)) == 1:
 				if i not in share_map:share_map[i]=[]
 				share_map[i].append(j)
+				update_shares(i,j)
 
 def update_user_bias():
 	for i in like_map:
@@ -158,6 +170,15 @@ def update_user_bias():
 	for i in share_map:
 		for j in share_map[i]:
 			users[j] = round(users[j]*BETA + posts[i]*(1-BETA),2)
+
+def update_like(i,j):
+	users[j] = round(users[j]*ALPHA + posts[i]*(1-ALPHA),2)
+
+def update_dislike(i,j):
+	users[j] = round(users[j]*ALPHA - posts[i]*(1-ALPHA),2)
+
+def update_shares(i,j):
+	users[j] = round(users[j]*BETA + posts[i]*(1-BETA),2)
 
 
 def share():
@@ -241,7 +262,6 @@ init_viewership = copy.deepcopy(viewership_map)
 print("Bias:Not Visible")
 for i in range(LOOPS):
 	generate_actions()
-	update_user_bias()
 	# printmaps()
 	share()
 	print(round(sum(map(lambda x:(x**2),users)),3))
@@ -256,7 +276,6 @@ viewership_map = init_viewership
 print("Bias:Visible")
 for i in range(LOOPS):
 	generate_actions_given_bias()
-	update_user_bias()
 	share()
 	print(round(sum(map(lambda x:(x**2),users)),3))
 

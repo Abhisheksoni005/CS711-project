@@ -1,7 +1,7 @@
 import random
 import sys
 import math
-import csv
+from networkx.generators.random_graphs import erdos_renyi_graph
 
 USER_NUM = 25
 POST_NUM = 4
@@ -60,8 +60,8 @@ def viewership():
 	sigma = 1
 	for i in range(len(posts)):
 		mu = posts[i]
+		k = gaussian(mu,mu,sigma)*GAUSS_FAC
 		for j in range(len(users)):
-			k = gaussian(mu,mu,sigma)*GAUSS_FAC
 			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
 				if i not in viewership_map:viewership_map[i] = []
 				viewership_map[i].append(j)
@@ -70,6 +70,9 @@ def generate_actions_given_bias():
 	global like_map
 	global share_map
 	global dislike_map
+	like_map = {}
+	share_map = {}
+	dislike_map = {}
 
 	for i in viewership_map:
 		mu = posts[i]
@@ -79,15 +82,6 @@ def generate_actions_given_bias():
 		for j in viewership_map[i]:
 			if cointoss(gaussian(users[j],mu,sigma)/k) == 1:
 				if i not in like_map:like_map[i] = []
-
-				if abs(posts[i]) > 0.8:
-					if i not in dislike_map:dislike_map[i] = []
-					dislike_map[i].append(j)
-					continue
-
-				elif abs(posts[i]-users[j]):
-
-					
 				like_map[i].append(j)
 			else:
 				if i not in dislike_map:dislike_map[i] = []
@@ -105,6 +99,9 @@ def generate_actions():
 	global like_map
 	global share_map
 	global dislike_map
+	# like_map = {}
+	# share_map = {}
+	# dislike_map = {}
 
 	for i in viewership_map:
 		mu = posts[i]
@@ -134,7 +131,7 @@ def update_user_bias():
 	for i in like_map:
 		for j in like_map[i]:
 			users[j] = round(users[j]*ALPHA + posts[i]*(1-ALPHA),2)
-			
+
 	for i in dislike_map:
 		for j in dislike_map[i]:
 			users[j] = round(users[j]*ALPHA - posts[i]*(1-ALPHA),2)
@@ -177,42 +174,32 @@ def utility_users():
 	util = USER_NUM*[0]
 	for i in viewership_map:
 		for j in viewership_map[i]:
-			util[j] += abs(posts[i]-users[j])	
-	
+			util[j] += abs(posts[i]-users[j])
 	util = map(lambda x: invert(x), util)
-	
 	return util
 
 def initialize():	
-	
-	with open(datafile, 'r') as csvfile:
-	
-		csvreader = csv.reader(csvfile)
-		
-		global users
-		global posts
-		users = next(csvreader)
-		posts = next(csvreader)
-		
-		users = [float(x) for x in users]
-		posts = [float(x) for x in posts]
+	for i in range(USER_NUM):users[i]=round(random.uniform(-1,1),2)
+	for i in range(POST_NUM):posts[i]=round(random.uniform(-1,1),2)
+	users.sort()
+	posts.sort()
+	g = erdos_renyi_graph(USER_NUM,0.5)
+	for x,y in g.edges:
+		if x not in graph:graph[x] = []
+		if y not in graph:graph[y] = []
+		graph[x].append(y)
+		graph[y].append(x)
 
-		USER_NUM = len(users)
-		POST_NUM = len(posts)
-
-		for row in csvreader:
-			graph[int(row[0])] = [ int(x) for x in row[1:]]	
-
+	print(users)
+	print(posts)
+	for i in graph:
+		print(i,graph[i])
 
 	viewership()
-
-datafile = "data_25_4.csv"
+	
 initialize()
-
-for i  in graph:
-	print(i, graph[i])
+printutil()
 printmaps()
-
 
 for i in range(LOOPS):
 	print("LOOP",i)

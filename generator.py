@@ -5,8 +5,8 @@ import math
 import csv
 from networkx.generators.random_graphs import erdos_renyi_graph
 
-USER_NUM = 20
-POST_NUM = 4
+USER_NUM = 150
+POST_NUM = 50
 RANGE = "ALL"
 
 users = USER_NUM*[0]

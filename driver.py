@@ -4,8 +4,8 @@ import math
 import csv
 import copy
 
-USER_NUM = 250
-POST_NUM = 30
+USER_NUM = 150
+POST_NUM = 50
 LOOPS = 20
 GAUSS_FAC = 10/9
 ALPHA  = 0.90
